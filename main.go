@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
@@ -33,6 +35,9 @@ func main() {
 		fmt.Println("Set env. TOKEN.")
 		os.Exit(-1)
 	}
+
+	hash := md5.Sum([]byte(Token))
+	tokenMd5 := hex.EncodeToString(hash[:])
 	pref := tele.Settings{
 		Token:  Token,
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
@@ -48,7 +53,7 @@ func main() {
 	}
 
 	service := service.NewTgService(backURl)
-	tg := handler.NewTg(service) //http://127.0.0.1:8095
+	tg := handler.NewTg(service, tokenMd5) //http://127.0.0.1:8095
 
 	b.Handle(&btnOrders, tg.GetOrders)
 
@@ -59,8 +64,10 @@ func main() {
 	b.Handle("/start", tg.HandleStartBtn)
 
 	b.Handle("/test", func(c tele.Context) error {
-		fmt.Println(menu)
-		return c.Send("message", menu)
+		// fmt.Println(menu)
+		fmt.Println(c.Message().Sender.ID)
+		// return c.Send("message", menu)
+		return nil
 	})
 
 	b.Start()

@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 	"tgbot/internal/model"
@@ -18,19 +17,22 @@ var (
 )
 
 type TgHandler struct {
-	// *tele.Bot
 	TgService *service.Services
+	TokenMd5  string
 }
 
-func NewTg(service *service.Services) *TgHandler {
-	return &TgHandler{TgService: service}
+func NewTg(service *service.Services, tokenmd5 string) *TgHandler {
+	return &TgHandler{
+		TgService: service,
+		TokenMd5:  tokenmd5,
+	}
 }
 
 func (tg *TgHandler) GetOrders(c tele.Context) error {
 	firstName := c.Message().Chat.FirstName
-	chatID := c.Chat().ID
+	userID := c.Message().Sender.ID
 
-	messages, ids, err := tg.TgService.GetOrders(int(chatID), firstName)
+	messages, ids, err := tg.TgService.GetOrders(int(userID), firstName, tg.TokenMd5)
 	if err != nil {
 		return err
 	}
@@ -100,11 +102,11 @@ func (tg *TgHandler) HandleStartBtn(c tele.Context) error {
 		TgFirsName: c.Message().Sender.FirstName,
 		TgUserName: c.Message().Sender.Username,
 		ChatID:     c.Chat().ID,
-		TgToken:    os.Getenv("TOKEN"),
+		TokenMd5:   tg.TokenMd5,
 	}
 
 	if clientInfo.TgUserID == 0 || clientInfo.TgFirsName == "" ||
-		clientInfo.TgUserName == "" || clientInfo.ChatID == 0 || clientInfo.TgToken == "" {
+		clientInfo.TgUserName == "" || clientInfo.ChatID == 0 {
 		return c.Send("Что-то пошло не так. Попробуйте еще раз. Введите /start.", &tele.ReplyMarkup{})
 	}
 	exist, err := tg.TgService.CheckClient(clientInfo)

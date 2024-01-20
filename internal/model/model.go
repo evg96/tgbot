@@ -29,5 +29,5 @@ type Client struct {
 	TgUserName string `json:"username"`
 	TgFirsName string `json:"firstname"`
 	ChatID     int64  `json:"chat_id"`
-	TgToken    string `json:"tg_token"`
+	TokenMd5   string `json:"token_md5"`
 }

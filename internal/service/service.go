@@ -13,7 +13,7 @@ import (
 
 const (
 	duration    = 30
-	getOrders   = "/get/orders?chat="
+	getOrders   = "/get/orders?user=%s&token=%s"
 	cancleOrder = "/delete/order"
 	newClient   = "/client/new"
 	checkClient = "/client/check"
@@ -21,7 +21,7 @@ const (
 
 type TgService interface {
 	CancleOrder(orderID int) error
-	GetOrders(userID int, firstName string) ([]string, []int, error)
+	GetOrders(userID int, firstName string, tokenMd5 string) ([]string, []int, error)
 	AddNewClient(infoInfo model.Client) error
 	CheckClient(info model.Client) (bool, error)
 }
@@ -67,8 +67,8 @@ func (s *HandleOrder) CancleOrder(orderID int) error {
 	return nil
 }
 
-func (s *HandleOrder) GetOrders(chatID int, firstName string) ([]string, []int, error) {
-	report, err := s.getOrders(chatID)
+func (s *HandleOrder) GetOrders(userID int, firstName string, tokenMd5 string) ([]string, []int, error) {
+	report, err := s.getOrders(userID, tokenMd5)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -80,23 +80,10 @@ func (s *HandleOrder) GetOrders(chatID int, firstName string) ([]string, []int, 
 	return message, ids, nil
 }
 
-func genMessage(orders []model.Order) ([]string, []int) {
-	var messages []string
-	var ids []int
-	for i, order := range orders {
-		d, s, t := getDateAndTime(order.Time, order.TimeSlots)
-		services := getServices(order.Services)
-		employee := getEmployee(order.Employee)
-		r := fmt.Sprintf("%d. %s c %s до %s\n%sМастер: %s\n", i+1, d, s, t, services, employee)
-		messages = append(messages, r)
-		ids = append(ids, order.ID)
-	}
-	return messages, ids
-}
-
-func (s *HandleOrder) getOrders(chatID int) ([]model.Order, error) {
+func (s *HandleOrder) getOrders(userID int, tokenMd5 string) ([]model.Order, error) {
 	client := http.Client{}
-	path := getOrders + strconv.Itoa(chatID)
+	path := fmt.Sprintf(getOrders, strconv.Itoa(userID), tokenMd5)
+	// path := getOrders + strconv.Itoa(chatID)
 	url := s.BackURL + path
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -118,6 +105,20 @@ func (s *HandleOrder) getOrders(chatID int) ([]model.Order, error) {
 		return nil, err
 	}
 	return report, nil
+}
+
+func genMessage(orders []model.Order) ([]string, []int) {
+	var messages []string
+	var ids []int
+	for i, order := range orders {
+		d, s, t := getDateAndTime(order.Time, order.TimeSlots)
+		services := getServices(order.Services)
+		employee := getEmployee(order.Employee)
+		r := fmt.Sprintf("%d. %s c %s до %s\n%sМастер: %s\n", i+1, d, s, t, services, employee)
+		messages = append(messages, r)
+		ids = append(ids, order.ID)
+	}
+	return messages, ids
 }
 
 func getDateAndTime(t time.Time, timeSlots int) (string, string, string) {
