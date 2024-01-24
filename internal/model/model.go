@@ -31,3 +31,16 @@ type Client struct {
 	ChatID     int64  `json:"chat_id"`
 	TokenMd5   string `json:"token_md5"`
 }
+
+type CancledOrder struct {
+	Time         string `json:"time"`
+	EmployeeName string `json:"employee"`
+}
+
+type CreatedOrder struct {
+	Title            []string  `json:"title"`
+	Time             time.Time `json:"time"`
+	Duration         int       `json:"duration"`
+	EmployeeName     string    `json:"empl_name"`
+	ClientTgUsername string    `json:"tg_username"`
+}

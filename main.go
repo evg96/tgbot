@@ -24,6 +24,10 @@ var (
 	btnOrders = menu.Text("ℹ Мои записи")
 )
 
+const (
+	period = 3
+)
+
 func main() {
 	backURl := os.Getenv("BACK")
 	if backURl == "" {
@@ -52,8 +56,25 @@ func main() {
 		return
 	}
 
-	service := service.NewTgService(backURl)
-	tg := handler.NewTg(service, tokenMd5) //http://127.0.0.1:8095
+	service := service.NewTgService(backURl, tokenMd5)
+	tg := handler.NewTg(service, tokenMd5)
+
+	go func() {
+		groupChat := service.GetGroupChat()
+		if groupChat != 0 {
+			for {
+				time.Sleep(period * time.Minute)
+				cancleOrders, err := service.GetCanceledOrders()
+				newOrders, err := service.GetCreatedOrders()
+				if err == nil && newOrders != "" {
+					b.Send(&tele.Chat{ID: groupChat}, newOrders)
+				}
+				if err == nil && cancleOrders != "" {
+					b.Send(&tele.Chat{ID: groupChat}, cancleOrders)
+				}
+			}
+		}
+	}()
 
 	b.Handle(&btnOrders, tg.GetOrders)
 

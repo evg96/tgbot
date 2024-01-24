@@ -32,7 +32,7 @@ func (tg *TgHandler) GetOrders(c tele.Context) error {
 	firstName := c.Message().Chat.FirstName
 	userID := c.Message().Sender.ID
 
-	messages, ids, err := tg.TgService.GetOrders(int(userID), firstName, tg.TokenMd5)
+	messages, ids, err := tg.TgService.GetOrders(int(userID), firstName)
 	if err != nil {
 		return err
 	}
